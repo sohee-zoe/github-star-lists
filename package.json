@@ -1,0 +1,37 @@
+{
+  "name": "github-star-lists",
+  "version": "0.1.0",
+  "description": "Organize GitHub starred repositories into Star Lists with dry-run plans, README fallback classification, and list description sync.",
+  "type": "module",
+  "bin": {
+    "github-star-lists": "./scripts/organize-stars.mjs",
+    "gh-star-lists": "./scripts/organize-stars.mjs"
+  },
+  "files": [
+    "scripts/",
+    "config/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "check": "node --check scripts/organize-stars.mjs",
+    "plan": "node scripts/organize-stars.mjs",
+    "apply": "node scripts/organize-stars.mjs --apply"
+  },
+  "keywords": [
+    "github",
+    "stars",
+    "starred",
+    "lists",
+    "cli",
+    "graphql"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

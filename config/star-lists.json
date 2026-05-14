@@ -1,0 +1,118 @@
+{
+  "settings": {
+    "defaultPrivate": false,
+    "minScore": 2,
+    "maxListsPerRepo": 3,
+    "preserveExistingAssignments": true
+  },
+  "lists": [
+    {
+      "name": "Agentic Coding",
+      "description": "AI coding agents, code generation, MCP, and developer automation.",
+      "keywords": [
+        "agent", "agentic", "ai coding", "autonomous", "codegen", "coding assistant",
+        "copilot", "cursor", "claude", "codex", "mcp", "multi-agent", "swe", "devin",
+        "software engineering agent", "llm app"
+      ],
+      "topics": ["agents", "ai-agent", "mcp", "code-generation", "coding-agent", "developer-tools"]
+    },
+    {
+      "name": "LLM",
+      "description": "Large language models, RAG, inference, evals, and LLM application tooling.",
+      "keywords": [
+        "llm", "large language model", "language model", "rag", "retrieval",
+        "transformer", "prompt", "embedding", "inference", "ollama", "llama",
+        "vllm", "langchain", "llamaindex", "eval", "chatbot"
+      ],
+      "topics": ["llm", "rag", "transformers", "langchain", "llama", "openai", "chatbot", "embeddings"]
+    },
+    {
+      "name": "Vision",
+      "description": "Computer vision, image generation, video, OCR, and multimodal vision.",
+      "keywords": [
+        "vision", "computer vision", "image", "video", "ocr", "segmentation",
+        "detection", "object detection", "diffusion", "stable diffusion", "multimodal",
+        "vae", "gan", "opencv", "yolo"
+      ],
+      "topics": ["computer-vision", "opencv", "image-processing", "diffusion", "ocr", "yolo", "multimodal"]
+    },
+    {
+      "name": "Quantization",
+      "description": "Model compression, quantization, GGUF, and efficient inference.",
+      "keywords": [
+        "quantization", "quantize", "quantized", "int4", "int8", "fp8", "gguf",
+        "ggml", "awq", "gptq", "bitsandbytes", "compression", "efficient inference"
+      ],
+      "topics": ["quantization", "gguf", "ggml", "model-compression", "inference"]
+    },
+    {
+      "name": "ROS",
+      "description": "ROS, robotics middleware, robot tooling, and autonomy systems.",
+      "keywords": ["ros", "ros2", "robot", "robotics", "navigation2", "nav2", "gazebo", "rviz", "urdf"],
+      "topics": ["ros", "ros2", "robotics", "gazebo", "rviz", "autonomous-robots"]
+    },
+    {
+      "name": "SLAM",
+      "description": "SLAM, localization, mapping, LiDAR, and visual odometry.",
+      "keywords": [
+        "slam", "localization", "mapping", "lidar", "visual odometry", "odometry",
+        "bundle adjustment", "point cloud", "pointcloud", "3d reconstruction"
+      ],
+      "topics": ["slam", "lidar", "mapping", "localization", "point-cloud", "visual-odometry"]
+    },
+    {
+      "name": "Utilities",
+      "description": "Practical CLI, desktop, productivity, and small workflow tools.",
+      "keywords": [
+        "cli", "terminal", "tui", "utility", "tool", "productivity", "workflow",
+        "automation", "desktop", "app", "editor", "viewer", "formatter", "converter"
+      ],
+      "topics": ["cli", "terminal", "tui", "productivity", "developer-tools", "automation"]
+    },
+    {
+      "name": "Frontend",
+      "description": "Frontend frameworks, UI components, design systems, and web apps.",
+      "keywords": [
+        "react", "next.js", "nextjs", "vue", "svelte", "frontend", "ui", "component",
+        "design system", "tailwind", "css", "web app", "vite"
+      ],
+      "topics": ["react", "nextjs", "vue", "svelte", "tailwindcss", "frontend", "ui"]
+    },
+    {
+      "name": "Backend",
+      "description": "APIs, servers, databases, infrastructure services, and backend frameworks.",
+      "keywords": [
+        "api", "backend", "server", "database", "postgres", "sqlite", "redis",
+        "queue", "microservice", "fastapi", "django", "rails", "spring", "nestjs"
+      ],
+      "topics": ["api", "backend", "database", "postgresql", "sqlite", "redis", "server"]
+    },
+    {
+      "name": "DevOps",
+      "description": "Deployment, containers, Kubernetes, CI, observability, and operations.",
+      "keywords": [
+        "docker", "kubernetes", "k8s", "terraform", "ansible", "ci", "cd",
+        "deployment", "observability", "monitoring", "prometheus", "grafana"
+      ],
+      "topics": ["docker", "kubernetes", "terraform", "devops", "ci-cd", "monitoring"]
+    },
+    {
+      "name": "Data",
+      "description": "Data engineering, analytics, notebooks, ETL, and visualization.",
+      "keywords": [
+        "data", "analytics", "etl", "pipeline", "notebook", "pandas", "duckdb",
+        "spark", "visualization", "dashboard", "chart"
+      ],
+      "topics": ["data-engineering", "analytics", "etl", "pandas", "duckdb", "visualization"]
+    },
+    {
+      "name": "Security",
+      "description": "Security tooling, secrets, auth, vulnerability research, and privacy.",
+      "keywords": [
+        "security", "auth", "oauth", "passkey", "secret", "vulnerability",
+        "scanner", "privacy", "encryption", "cryptography", "sso"
+      ],
+      "topics": ["security", "privacy", "oauth", "cryptography", "vulnerability-scanner"]
+    }
+  ]
+}

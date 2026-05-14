@@ -1,0 +1,9 @@
+out/
+.env
+.env.*
+star-lists.config.json
+*.tgz
+.git/
+.gitignore
+.tmp/
+tmp/
