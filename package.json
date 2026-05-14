@@ -1,11 +1,11 @@
 {
   "name": "github-star-lists",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Organize GitHub starred repositories into Star Lists with dry-run plans, README fallback classification, and list description sync.",
   "type": "module",
   "bin": {
-    "github-star-lists": "./scripts/organize-stars.mjs",
-    "gh-star-lists": "./scripts/organize-stars.mjs"
+    "github-star-lists": "scripts/organize-stars.mjs",
+    "gh-star-lists": "scripts/organize-stars.mjs"
   },
   "files": [
     "scripts/",
@@ -28,6 +28,14 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sohee-zoe/github-star-lists.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sohee-zoe/github-star-lists/issues"
+  },
+  "homepage": "https://github.com/sohee-zoe/github-star-lists#readme",
   "engines": {
     "node": ">=20"
   },
