@@ -49,7 +49,6 @@ The wizard asks you to choose:
 - whether to use existing lists only
 - whether to sync descriptions
 - whether to sync existing list visibility
-- whether to scan all stars or only the newest N
 
 To create a local config first, use the general preset:
 

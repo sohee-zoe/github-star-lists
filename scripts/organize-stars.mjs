@@ -174,11 +174,6 @@ async function runWizard() {
     const syncVisibility = await promptYesNo(rl, "Also sync existing list visibility?", false);
     if (syncVisibility) generatedArgs.push("--sync-list-visibility");
 
-    if (mode !== "metadata") {
-      const limitValue = await promptText(rl, "Limit to newest N stars? Leave blank for all", "");
-      if (limitValue.trim()) generatedArgs.push(`--limit=${limitValue.trim()}`);
-    }
-
     if (args.has("--verbose")) generatedArgs.push("--verbose");
     if (args.has("--quiet")) generatedArgs.push("--quiet");
 
