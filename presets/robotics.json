@@ -1,0 +1,40 @@
+{
+  "settings": {
+    "defaultPrivate": false,
+    "minScore": 2,
+    "maxListsPerRepo": 3,
+    "preserveExistingAssignments": true
+  },
+  "lists": [
+    {
+      "name": "ROS",
+      "description": "ROS, ROS 2, robotics middleware, robot tooling, and autonomy systems.",
+      "keywords": ["ros", "ros2", "robot", "robotics", "navigation2", "nav2", "gazebo", "rviz", "urdf"],
+      "topics": ["ros", "ros2", "robotics", "gazebo", "rviz", "autonomous-robots"]
+    },
+    {
+      "name": "SLAM",
+      "description": "SLAM, localization, mapping, LiDAR, point clouds, and visual odometry.",
+      "keywords": ["slam", "localization", "mapping", "lidar", "visual odometry", "odometry", "bundle adjustment", "point cloud", "pointcloud", "3d reconstruction"],
+      "topics": ["slam", "lidar", "mapping", "localization", "point-cloud", "visual-odometry"]
+    },
+    {
+      "name": "Simulation",
+      "description": "Robot simulation, digital twins, physics engines, and synthetic environments.",
+      "keywords": ["simulation", "simulator", "gazebo", "isaac", "mujoco", "pybullet", "physics", "digital twin"],
+      "topics": ["simulation", "gazebo", "isaac-sim", "mujoco", "pybullet"]
+    },
+    {
+      "name": "Perception",
+      "description": "Robot perception, computer vision, sensors, detection, tracking, and segmentation.",
+      "keywords": ["perception", "vision", "camera", "sensor", "detection", "tracking", "segmentation", "opencv", "lidar"],
+      "topics": ["perception", "computer-vision", "opencv", "lidar", "segmentation"]
+    },
+    {
+      "name": "Control",
+      "description": "Robot control, planning, kinematics, dynamics, navigation, and motion planning.",
+      "keywords": ["control", "planning", "motion planning", "kinematics", "dynamics", "navigation", "trajectory", "path planning"],
+      "topics": ["robotics", "motion-planning", "navigation", "control"]
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "settings": {
+    "defaultPrivate": false,
+    "minScore": 2,
+    "maxListsPerRepo": 3,
+    "preserveExistingAssignments": true
+  },
+  "lists": [
+    {
+      "name": "LLM",
+      "description": "Large language models, RAG, inference, evals, and LLM application tooling.",
+      "keywords": ["llm", "large language model", "language model", "rag", "retrieval", "transformer", "prompt", "embedding", "inference", "ollama", "llama", "vllm", "langchain", "llamaindex", "eval", "chatbot"],
+      "topics": ["llm", "rag", "transformers", "langchain", "llama", "openai", "chatbot", "embeddings"]
+    },
+    {
+      "name": "AI Agents",
+      "description": "AI agents, MCP, tool use, multi-agent systems, and workflow automation.",
+      "keywords": ["agent", "agentic", "ai agent", "autonomous", "tool use", "mcp", "multi-agent", "workflow", "assistant"],
+      "topics": ["agents", "ai-agent", "mcp", "multi-agent", "automation"]
+    },
+    {
+      "name": "AI Coding",
+      "description": "Coding assistants, code generation, software engineering agents, and developer automation.",
+      "keywords": ["ai coding", "codegen", "coding assistant", "copilot", "cursor", "claude", "codex", "devin", "software engineering agent"],
+      "topics": ["code-generation", "coding-agent", "developer-tools", "ai-agent"]
+    },
+    {
+      "name": "Vision",
+      "description": "Computer vision, image generation, video, OCR, and multimodal systems.",
+      "keywords": ["vision", "computer vision", "image", "video", "ocr", "segmentation", "detection", "diffusion", "stable diffusion", "multimodal", "opencv", "yolo"],
+      "topics": ["computer-vision", "opencv", "image-processing", "diffusion", "ocr", "yolo", "multimodal"]
+    },
+    {
+      "name": "ML Ops",
+      "description": "Training, evaluation, datasets, model serving, and machine learning infrastructure.",
+      "keywords": ["machine learning", "mlops", "training", "dataset", "eval", "benchmark", "model serving", "fine tuning", "finetune"],
+      "topics": ["machine-learning", "mlops", "datasets", "model-serving", "evaluation"]
+    }
+  ]
+}

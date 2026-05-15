@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const DEFAULT_CONFIG_PATH = resolve(PACKAGE_ROOT, "config/star-lists.json");
+const PRESETS_DIR = resolve(PACKAGE_ROOT, "presets");
+const DEFAULT_PRESET = "general";
+const DEFAULT_CONFIG_PATH = resolve(PRESETS_DIR, `${DEFAULT_PRESET}.json`);
 
 const command = process.argv[2]?.startsWith("-") ? null : process.argv[2];
 const args = new Set(process.argv.slice(2));
@@ -25,8 +27,9 @@ const onlyListMetadata = args.has("--only-list-metadata") || onlyListDescription
 const allPrivate = args.has("--all-private");
 const allPublic = args.has("--all-public");
 const yes = args.has("--yes") || args.has("-y");
-const limitArg = process.argv.find((arg) => arg.startsWith("--limit="));
-const limit = limitArg ? Number(limitArg.slice("--limit=".length)) : Infinity;
+const limitOption = resolveOption("--limit");
+const limit = limitOption ? Number(limitOption) : Infinity;
+let authToken = null;
 
 if (args.has("--help") || args.has("-h")) {
   printHelp();
@@ -34,7 +37,12 @@ if (args.has("--help") || args.has("-h")) {
 }
 
 if (command === "init") {
-  initConfig();
+  await initConfig();
+  process.exit(0);
+}
+
+if (command === "suggest-config") {
+  await suggestConfig();
   process.exit(0);
 }
 
@@ -43,7 +51,7 @@ if (command === "wizard") {
   process.exit(status);
 }
 
-if (command && !["run", "wizard"].includes(command)) {
+if (command && !["run", "wizard", "suggest-config"].includes(command)) {
   fail(`Unknown command: ${command}\nRun with --help for usage.`);
 }
 
@@ -70,8 +78,6 @@ const settings = {
   ...config.settings
 };
 
-const token = getToken();
-
 function resolveOption(name) {
   const equalsArg = process.argv.find((arg) => arg.startsWith(`${name}=`));
   if (equalsArg) return equalsArg.slice(name.length + 1);
@@ -90,13 +96,40 @@ function findDefaultConfigPath() {
   return candidates.find((candidate) => existsSync(candidate)) ?? DEFAULT_CONFIG_PATH;
 }
 
-function initConfig() {
+async function initConfig() {
+  if (args.has("--list-presets")) {
+    console.log(listPresets().join("\n"));
+    return;
+  }
+
   const target = resolve(process.cwd(), resolveOption("--config") ?? "star-lists.config.json");
   if (existsSync(target) && !args.has("--force")) {
     fail(`${target} already exists. Re-run init with --force to overwrite it.`);
   }
-  writeFileSync(target, readFileSync(DEFAULT_CONFIG_PATH, "utf8"));
-  console.log(`Wrote ${target}`);
+
+  if (args.has("--from-existing-lists")) {
+    await initFromExistingLists(target);
+    return;
+  }
+
+  const preset = resolveOption("--preset") ?? DEFAULT_PRESET;
+  writeFileSync(target, `${JSON.stringify(readPresetConfig(preset), null, 2)}\n`);
+  console.log(`Wrote ${target} from preset "${preset}"`);
+}
+
+function listPresets() {
+  return readdirSync(PRESETS_DIR)
+    .filter((name) => name.endsWith(".json"))
+    .map((name) => name.replace(/\.json$/, ""))
+    .sort((a, b) => a.localeCompare(b));
+}
+
+function readPresetConfig(preset) {
+  const available = listPresets();
+  if (!available.includes(preset)) {
+    fail(`Unknown preset: ${preset}\nAvailable presets: ${available.join(", ")}`);
+  }
+  return JSON.parse(readFileSync(resolve(PRESETS_DIR, `${preset}.json`), "utf8"));
 }
 
 async function runWizard() {
@@ -217,14 +250,81 @@ async function promptText(rl, question, defaultValue) {
 }
 
 function getToken() {
+  if (authToken) return authToken;
+
   const envToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
-  if (envToken) return envToken;
+  if (envToken) {
+    authToken = envToken;
+    return authToken;
+  }
 
   try {
-    return execFileSync("gh", ["auth", "token"], { encoding: "utf8" }).trim();
+    authToken = execFileSync("gh", ["auth", "token"], { encoding: "utf8" }).trim();
+    return authToken;
   } catch {
     fail("No GitHub token found. Set GITHUB_TOKEN/GH_TOKEN or run `gh auth login`.");
   }
+}
+
+async function initFromExistingLists(target) {
+  const progress = createProgress({ quiet });
+  const viewer = await fetchViewerLists(progress);
+  const lists = viewer.lists.nodes.map((list) => ({
+    name: list.name,
+    description: list.description ?? "",
+    isPrivate: list.isPrivate,
+    keywords: [],
+    topics: suggestTopicsForListName(list.name)
+  }));
+
+  writeFileSync(target, `${JSON.stringify({
+    settings: {
+      defaultPrivate: false,
+      minScore: 2,
+      maxListsPerRepo: 3,
+      preserveExistingAssignments: true
+    },
+    lists
+  }, null, 2)}\n`);
+  console.log(`Wrote ${target} from ${lists.length} existing GitHub Star Lists`);
+}
+
+async function suggestConfig() {
+  if (Number.isNaN(limit) || limit <= 0) {
+    fail("--limit must be a positive number");
+  }
+
+  const progress = createProgress({ quiet });
+  const viewer = await fetchViewerLists(progress);
+  const stars = await fetchStars(limit, progress);
+  const stats = buildSuggestionStats(stars);
+  const existingLists = viewer.lists.nodes;
+  const lists = existingLists.length
+    ? existingLists.map((list) => suggestListFromExisting(list, stats))
+    : suggestListsFromStats(stats);
+
+  mkdirSync(outDir, { recursive: true });
+  const jsonPath = resolve(outDir, "suggested-config.json");
+  writeFileSync(jsonPath, `${JSON.stringify({
+    settings: {
+      defaultPrivate: false,
+      minScore: 2,
+      maxListsPerRepo: 3,
+      preserveExistingAssignments: true
+    },
+    lists,
+    _meta: {
+      generatedAt: new Date().toISOString(),
+      starsScanned: stars.length,
+      existingListsScanned: existingLists.length,
+      topTopics: topEntries(stats.topics, 30),
+      topLanguages: topEntries(stats.languages, 20),
+      topDescriptionKeywords: topEntries(stats.descriptionKeywords, 40)
+    }
+  }, null, 2)}\n`);
+
+  console.log(`Wrote ${jsonPath}`);
+  console.log(`Scanned ${stars.length} starred repositories and ${existingLists.length} existing lists.`);
 }
 
 function resolveListPrivacy(listConfig) {
@@ -271,11 +371,16 @@ function printHelp() {
   console.log(`GitHub Star List Organizer
 
 Usage:
-  github-star-lists init [--config star-lists.config.json] [--force]
+  github-star-lists init [--preset general] [--config star-lists.config.json] [--force]
+  github-star-lists init --from-existing-lists [--config star-lists.config.json] [--force]
+  github-star-lists suggest-config [--limit=200] [--out-dir out]
   github-star-lists wizard
   github-star-lists [run] [options]
 
 Options:
+  --preset <name>                 Config preset for init. Default: general.
+  --from-existing-lists           Build config from your current GitHub Star Lists.
+  --list-presets                  Print available preset names.
   --apply                         Apply changes to GitHub. Without this, only writes a plan.
   --config <path>                 Classification config path.
   --out-dir <path>                Plan output directory. Default: out
@@ -300,33 +405,9 @@ Authentication:
 
 async function main() {
   const progress = createProgress({ quiet });
-  progress.start("Loading viewer lists");
-  const viewer = await graphql(`
-    query {
-      viewer {
-        login
-        id
-        lists(first: 100) {
-          nodes {
-            id
-            name
-            description
-            isPrivate
-            items(first: 100) {
-              nodes {
-                __typename
-                ... on Repository { id nameWithOwner }
-              }
-              pageInfo { hasNextPage endCursor }
-            }
-          }
-        }
-      }
-    }
-  `);
-  progress.done("Loaded viewer lists");
+  const viewer = await fetchViewerLists(progress, { includeItems: true });
 
-  const listByName = new Map(viewer.viewer.lists.nodes.map((list) => [list.name, list]));
+  const listByName = new Map(viewer.lists.nodes.map((list) => [list.name, list]));
   const listsToCreate = [];
   const listDescriptionUpdates = [];
   const listVisibilityUpdates = [];
@@ -443,7 +524,7 @@ async function main() {
     return;
   }
 
-  const existingAssignments = await fetchExistingAssignments(viewer.viewer.lists.nodes, progress);
+  const existingAssignments = await fetchExistingAssignments(viewer.lists.nodes, progress);
   const stars = await fetchStars(limit, progress);
   const changes = [];
   const skipped = [];
@@ -566,6 +647,216 @@ async function main() {
   console.log(`Wrote ${mdPath}`);
   console.log(`Wrote ${jsonPath}`);
   if (!apply) console.log("Run with --apply to update GitHub Star Lists.");
+}
+
+async function fetchViewerLists(progress, { includeItems = false } = {}) {
+  const lists = [];
+  let cursor = null;
+  let viewerLogin = "";
+  let viewerId = "";
+  progress.start("Loading viewer lists");
+
+  do {
+    const data = await graphql(
+      `
+      query($cursor: String) {
+        viewer {
+          login
+          id
+          lists(first: 100, after: $cursor) {
+            nodes {
+              id
+              name
+              description
+              isPrivate
+              ${includeItems ? `
+              items(first: 100) {
+                nodes {
+                  __typename
+                  ... on Repository { id nameWithOwner }
+                }
+                pageInfo { hasNextPage endCursor }
+              }
+              ` : ""}
+            }
+            pageInfo { hasNextPage endCursor }
+          }
+        }
+      }
+      `,
+      { cursor }
+    );
+
+    viewerLogin = data.viewer.login;
+    viewerId = data.viewer.id;
+    lists.push(...data.viewer.lists.nodes);
+    cursor = data.viewer.lists.pageInfo.endCursor;
+    progress.tick(`Loading viewer lists ${lists.length}`);
+    if (!data.viewer.lists.pageInfo.hasNextPage) break;
+  } while (cursor);
+
+  progress.done(`Loaded ${lists.length} viewer lists`);
+  return {
+    login: viewerLogin,
+    id: viewerId,
+    lists: { nodes: lists }
+  };
+}
+
+function buildSuggestionStats(stars) {
+  const topics = new Map();
+  const languages = new Map();
+  const descriptionKeywords = new Map();
+
+  for (const repo of stars) {
+    for (const topic of topicNames(repo)) increment(topics, topic);
+    const language = repo.primaryLanguage?.name;
+    if (language) increment(languages, language);
+
+    const text = `${repo.nameWithOwner} ${repo.description ?? ""}`;
+    for (const word of extractKeywords(text)) increment(descriptionKeywords, word);
+  }
+
+  return { topics, languages, descriptionKeywords };
+}
+
+function suggestListFromExisting(list, stats) {
+  const nameTopics = suggestTopicsForListName(list.name);
+  const tokens = tokenize(list.name);
+  const matchedTopics = topEntries(stats.topics, 100)
+    .map(([topic]) => topic)
+    .filter((topic) => tokens.some((token) => topic.includes(token) || token.includes(topic)))
+    .slice(0, 12);
+
+  return {
+    name: list.name,
+    description: list.description ?? "",
+    isPrivate: list.isPrivate,
+    keywords: suggestKeywordsForListName(list.name, stats),
+    topics: unique([...nameTopics, ...matchedTopics])
+  };
+}
+
+function suggestListsFromStats(stats) {
+  const general = readPresetConfig(DEFAULT_PRESET);
+  const topicSet = new Set(topEntries(stats.topics, 100).map(([topic]) => topic));
+  const keywordSet = new Set(topEntries(stats.descriptionKeywords, 100).map(([keyword]) => keyword));
+  const languageSet = new Set(topEntries(stats.languages, 50).map(([language]) => language.toLowerCase()));
+
+  return general.lists
+    .map((list) => {
+      const topics = (list.topics ?? []).filter((topic) => topicSet.has(topic));
+      const keywords = (list.keywords ?? []).filter((keyword) => {
+        const normalized = keyword.toLowerCase();
+        return keywordSet.has(normalized) || languageSet.has(normalized);
+      });
+      return {
+        ...list,
+        keywords: unique(keywords).slice(0, 20),
+        topics: unique(topics).slice(0, 20)
+      };
+    })
+    .filter((list) => list.keywords.length || list.topics.length)
+    .slice(0, 12);
+}
+
+function suggestTopicsForListName(name) {
+  const aliases = new Map([
+    ["ai", ["ai", "machine-learning"]],
+    ["llm", ["llm", "rag", "embeddings"]],
+    ["agent", ["agents", "ai-agent"]],
+    ["agents", ["agents", "ai-agent"]],
+    ["frontend", ["frontend", "react", "vue", "svelte"]],
+    ["backend", ["backend", "api", "server"]],
+    ["devops", ["devops", "docker", "kubernetes"]],
+    ["data", ["data-engineering", "analytics"]],
+    ["security", ["security", "privacy"]],
+    ["cli", ["cli", "terminal", "developer-tools"]],
+    ["tools", ["developer-tools", "productivity"]],
+    ["mobile", ["mobile", "ios", "android"]],
+    ["game", ["game-development", "gamedev"]],
+    ["robotics", ["robotics", "ros", "ros2"]],
+    ["ros", ["ros", "ros2", "robotics"]],
+    ["slam", ["slam", "mapping", "localization"]]
+  ]);
+
+  const topics = [];
+  for (const token of tokenize(name)) {
+    topics.push(...(aliases.get(token) ?? [token]));
+  }
+  return unique(topics).slice(0, 12);
+}
+
+function suggestKeywordsForListName(name, stats) {
+  const aliases = new Map([
+    ["ai", ["ai", "machine learning"]],
+    ["llm", ["llm", "rag", "embedding", "inference"]],
+    ["agent", ["agent", "agentic", "mcp"]],
+    ["agents", ["agent", "agentic", "mcp"]],
+    ["frontend", ["frontend", "react", "vue", "svelte", "ui"]],
+    ["backend", ["backend", "api", "server", "database"]],
+    ["devops", ["devops", "docker", "kubernetes", "terraform"]],
+    ["data", ["data", "analytics", "etl", "pipeline"]],
+    ["security", ["security", "auth", "privacy", "encryption"]],
+    ["cli", ["cli", "terminal", "tui"]],
+    ["tools", ["tool", "utility", "automation"]],
+    ["mobile", ["mobile", "ios", "android", "flutter"]],
+    ["game", ["game", "gamedev", "graphics"]],
+    ["robotics", ["robot", "robotics", "ros", "slam"]],
+    ["ros", ["ros", "ros2", "robotics"]],
+    ["slam", ["slam", "localization", "mapping"]]
+  ]);
+
+  const tokens = tokenize(name);
+  const keywords = [];
+  for (const token of tokens) {
+    if (token.length >= 3) keywords.push(token);
+    keywords.push(...(aliases.get(token) ?? []));
+  }
+
+  const frequentWords = topEntries(stats.descriptionKeywords, 100)
+    .map(([word]) => word)
+    .filter((word) => tokens.some((token) => word.includes(token) || token.includes(word)))
+    .slice(0, 10);
+
+  return unique([...keywords, ...frequentWords]).slice(0, 20);
+}
+
+function extractKeywords(text) {
+  const stopwords = new Set([
+    "about", "after", "also", "and", "are", "awesome", "based", "build", "built",
+    "can", "collection", "for", "from", "github", "into", "its", "library",
+    "list", "made", "new", "not", "open", "project", "repo", "repository",
+    "simple", "source", "that", "the", "this", "tool", "using", "with", "your"
+  ]);
+
+  return tokenize(text)
+    .filter((word) => word.length >= 3)
+    .filter((word) => !stopwords.has(word))
+    .filter((word) => !/^\d+$/.test(word));
+}
+
+function tokenize(text) {
+  return String(text)
+    .toLowerCase()
+    .replace(/[^a-z0-9+.#-]+/g, " ")
+    .split(/\s+/)
+    .map((word) => word.replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, ""))
+    .filter(Boolean);
+}
+
+function topEntries(map, count) {
+  return [...map.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, count);
+}
+
+function increment(map, key) {
+  map.set(key, (map.get(key) ?? 0) + 1);
+}
+
+function unique(values) {
+  return [...new Set(values.filter(Boolean))];
 }
 
 async function applyListDescriptionUpdates(updates, progress) {
@@ -702,7 +993,7 @@ async function fetchStars(max, progress) {
 async function fetchReadme(nameWithOwner) {
   const response = await fetch(`https://api.github.com/repos/${nameWithOwner}/readme`, {
     headers: {
-      authorization: `bearer ${token}`,
+      authorization: `bearer ${getToken()}`,
       accept: "application/vnd.github.raw",
       "user-agent": "git-star-organizer"
     }
@@ -883,7 +1174,7 @@ async function graphql(query, variables = {}) {
   const response = await fetch("https://api.github.com/graphql", {
     method: "POST",
     headers: {
-      authorization: `bearer ${token}`,
+      authorization: `bearer ${getToken()}`,
       "content-type": "application/json",
       "user-agent": "git-star-organizer"
     },

@@ -1,0 +1,40 @@
+{
+  "settings": {
+    "defaultPrivate": false,
+    "minScore": 2,
+    "maxListsPerRepo": 3,
+    "preserveExistingAssignments": true
+  },
+  "lists": [
+    {
+      "name": "Frontend",
+      "description": "Frontend frameworks, UI components, design systems, and browser applications.",
+      "keywords": ["frontend", "react", "vue", "svelte", "next.js", "nextjs", "remix", "ui", "component", "css", "tailwind", "vite"],
+      "topics": ["frontend", "react", "vue", "svelte", "nextjs", "tailwindcss", "ui"]
+    },
+    {
+      "name": "Backend",
+      "description": "APIs, servers, databases, backend frameworks, and service architecture.",
+      "keywords": ["backend", "api", "server", "database", "postgres", "sqlite", "redis", "queue", "fastapi", "django", "rails", "nestjs"],
+      "topics": ["backend", "api", "server", "database", "postgresql", "sqlite", "redis"]
+    },
+    {
+      "name": "Full Stack",
+      "description": "Full-stack frameworks, application starters, auth, and product scaffolding.",
+      "keywords": ["full stack", "fullstack", "app starter", "boilerplate", "auth", "saas", "template", "monorepo"],
+      "topics": ["fullstack", "starter-template", "boilerplate", "auth", "saas"]
+    },
+    {
+      "name": "DevOps",
+      "description": "Deployment, containers, infrastructure, CI/CD, observability, and operations.",
+      "keywords": ["devops", "docker", "kubernetes", "k8s", "terraform", "ci", "cd", "deployment", "monitoring", "observability"],
+      "topics": ["devops", "docker", "kubernetes", "terraform", "ci-cd", "monitoring"]
+    },
+    {
+      "name": "Tooling",
+      "description": "Build tools, test tools, developer experience, CLIs, and workflow automation.",
+      "keywords": ["tooling", "build", "bundler", "test", "testing", "cli", "developer experience", "dx", "automation", "formatter", "linter"],
+      "topics": ["developer-tools", "cli", "testing", "build-tool", "automation"]
+    }
+  ]
+}

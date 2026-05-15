@@ -36,13 +36,7 @@ The token needs the classic `user` scope. Add `repo` if your starred repositorie
 
 ## Quick Start
 
-Create a local config:
-
-```bash
-npx github-star-lists init
-```
-
-Use the guided flow:
+Most users should start with the guided flow:
 
 ```bash
 npx github-star-lists wizard
@@ -57,7 +51,13 @@ The wizard asks you to choose:
 - whether to sync existing list visibility
 - whether to scan all stars or only the newest N
 
-Preview directly. This does not write to GitHub:
+To create a local config first, use the general preset:
+
+```bash
+npx github-star-lists init
+```
+
+Then preview. This does not write to GitHub:
 
 ```bash
 npx github-star-lists
@@ -69,7 +69,52 @@ Apply changes:
 npx github-star-lists --apply
 ```
 
-Most users should start with `wizard`. The flags below are useful for automation or repeatable workflows.
+## Setup Your Config
+
+`init` writes `star-lists.config.json` in the current directory. The default preset is `general`.
+
+```bash
+npx github-star-lists init
+npx github-star-lists init --preset general
+```
+
+Available presets:
+
+```bash
+npx github-star-lists init --list-presets
+npx github-star-lists init --preset ai
+npx github-star-lists init --preset robotics
+npx github-star-lists init --preset webdev
+```
+
+If you already use GitHub Star Lists, generate config from those lists:
+
+```bash
+npx github-star-lists init --from-existing-lists
+```
+
+This copies list names, descriptions, and visibility. Keywords are left empty, while topics are lightly suggested from list names.
+
+To generate a non-AI config suggestion from your starred repositories:
+
+```bash
+npx github-star-lists suggest-config
+npx github-star-lists suggest-config --limit=200
+```
+
+This scans starred repo topics, languages, and description keywords, then writes:
+
+```text
+out/suggested-config.json
+```
+
+After reviewing that file, run with it:
+
+```bash
+npx github-star-lists --config out/suggested-config.json
+```
+
+The flags below are useful for automation or repeatable workflows.
 
 ## Visibility
 
@@ -141,7 +186,7 @@ By default the CLI uses the first existing file from:
 
 1. `star-lists.config.json`
 2. `config/star-lists.json`
-3. the packaged default config
+3. the packaged `general` preset
 
 Use a specific config:
 
